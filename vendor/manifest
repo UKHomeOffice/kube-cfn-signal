@@ -58,6 +58,13 @@
 			"path": "/service/cloudformation"
 		},
 		{
+			"importpath": "github.com/aws/aws-sdk-go/service/ec2",
+			"repository": "https://github.com/aws/aws-sdk-go",
+			"revision": "d17da62685915c25ab5b429b1d1e5b67faa98ac2",
+			"branch": "master",
+			"path": "/service/ec2"
+		},
+		{
 			"importpath": "github.com/go-ini/ini",
 			"repository": "https://github.com/go-ini/ini",
 			"revision": "f461e7678980ec9ced7d37b2b18abf8a7da393da",

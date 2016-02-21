@@ -26,10 +26,10 @@ var (
 
 func init() {
 	flag.StringVar(&stack, "stack", "", "CloudFormation stack name.")
-	flag.StringVar(&resource, "resource", "", "CloudFormation resource name.")
+	flag.StringVar(&resource, "resource", "", "CloudFormation logical resource id.")
 	flag.StringVar(&region, "region", "", "AWS region")
 	flag.StringVar(&uniqueID, "unique-id", "",
-		"A unique ID. When you signal EC2 instances or Auto Scaling groups, specify the instance ID.")
+		"A unique ID. When you signal EC2 instances or Auto Scaling groups, specify the instance id.")
 	flag.BoolVar(&kubelet, "kubelet", true, "Check kubelet healthz endpoint")
 	flag.StringVar(&kubeletEndpoint, "kubelet-endpoint",
 		"https://127.0.0.1:10250/healthz", "Kubelet healthz endpoint url")
@@ -40,12 +40,6 @@ func init() {
 
 func main() {
 	flag.Parse()
-	if stack == "" {
-		log.Fatalln("Stack name must be specified.")
-	}
-	if resource == "" {
-		log.Fatalln("Logical resource name must be specified.")
-	}
 	if region == "" {
 		if isMetadataAvailable() {
 			region = getRegion()
@@ -60,7 +54,22 @@ func main() {
 			log.Fatalln("EC2 metadata service is not available. Specify unique ID.")
 		}
 	}
+	if resource == "" {
+		if isMetadataAvailable() {
+			if resource = getResourceTagValue(uniqueID, "aws:cloudformation:logical-id"); resource == "" {
+				log.Fatalln("Logical resource id must be specified.")
+			}
+		}
+	}
+	if stack == "" {
+		if isMetadataAvailable() {
+			if stack = getResourceTagValue(uniqueID, "aws:cloudformation:stack-name"); stack == "" {
+				log.Fatalln("CloudFormation stack name must be specified.")
+			}
+		}
+	}
 
+	// Append kubeletEndpoint to urls to check
 	if kubelet {
 		urls = append(urls, kubeletEndpoint)
 	}
@@ -88,6 +97,7 @@ func main() {
 	}
 }
 
+// Send a signal to CloudFormation
 func sendSignal(status string) {
 	cf := cloudformation.New(session.New(&aws.Config{Region: &region}))
 	params := &cloudformation.SignalResourceInput{

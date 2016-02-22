@@ -92,6 +92,7 @@ func main() {
 				os.Exit(0)
 			}
 		case <-time.After(timeout):
+			sendSignal("FAILURE")
 			log.Fatalln("Timeout reached. Exiting..")
 		}
 	}

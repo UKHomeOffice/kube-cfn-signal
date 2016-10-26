@@ -1,5 +1,7 @@
 # Kubernetes CloudFormation Signal
 
+[![Build Status](https://travis-ci.org/UKHomeOffice/kube-cfn-signal.svg?branch=master)](https://travis-ci.org/UKHomeOffice/kube-cfn-signal)
+
 This little utility can health check kubernetes endpoints until they become
 ready and send a signal to CloudFormation API.
 

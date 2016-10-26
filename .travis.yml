@@ -1,0 +1,39 @@
+sudo: required
+services:
+  - docker
+
+env:
+  global:
+    - secure: "qvSjehLH/bYV4WHRF04luz0/XFpngOHzFDWcmPQshtMdPXmhz9JPw+FjhbuK+ygAIOvPv1pX/7jMG0aJr9HhBPyN0sWlw+trzZRNchNuoWRpaorGaI8E6PjAdsR+VNvFHnGaqShojs1pfz9oxYyMaNIh5msATJdFCOjbxRbceMt9NYw+SzWxC0DDcH3dPsBbib8GKVTtHyZhsBGnntroazXY8zeo1nfdUCMA9zWdl2MsMoOJShqJrFjYRpeQlzWEMp6DbE32GHzucdu0Lbm87gTyyqwYxNsTqoS4rP6JSPKTgAoNE6A4BR8+mB7ct3LoK5lPRn9Up3ccENvJ7aKEDZy6jo60Unkj0enXJ5BlxOSva4/bUTKNGFVUH062gow8SgywyluNMFogAIbgUrjVWZN7eqBjnIo/FhM/AZv38PKsiWCbRuCM9TeN3IJ9eRh1VjykYajG39crQEJDjPaR4VbWPVmULcV9mTeB//jxzv5gpFCMH+/VXXV/W/Ow0nmmyT+Mwvcj1vz7Df1asctk/VeDC9VtSHjG3PXjkX/I9YyMjctiBzRNtROQjGcFtiIhIoDDq5TC9a3kJIX9dfT+WTTUxTBkcIeacMRtnTMJuGGKisEiRyRUSi5zsiQdUR4JjP6t91l+qe6dSZnmmV45zd3F2PMsRBgvrmagezverBY="
+
+language: go
+go: 1.7
+
+install: true
+script:
+  - go test -v -cover
+  # Only go build binaries when branch is master and not a PR
+  - if ([[ ${TRAVIS_BRANCH} == "master" ]] && [[ ${TRAVIS_PULL_REQUEST} != "true" ]]) || [[ -n ${TRAVIS_TAG} ]]; then
+    mkdir -p bin;
+    GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_linux_amd64;
+    GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_linux_386;
+    GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -o bin/kube-cfn-signal_linux_arm;
+    GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_darwin_amd64;
+    GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_windows_amd64.exe;
+    docker login -u "ukhomeofficedigital+kube_cfn_signal" -p ${DOCKER_PASSWORD} quay.io;
+    docker build -t quay.io/ukhomeofficedigital/kube-cfn-signal:${TRAVIS_TAG:-latest} .;
+    docker push quay.io/ukhomeofficedigital/kube-cfn-signal:${TRAVIS_TAG:-latest};
+    fi
+deploy:
+  provider: releases
+  api_key:
+    secure: FFcsLKh2G/UDlZlcREUmfy94ghWS5Qpja+wq2SDFhRd2CKO4pC13BvRj2n0FmC3CVhWVUC6tfNH43FHmDMP1KzKFGSjdmihbuQgIcAB0cmpDaEmLoeJj1vJxe/OPnQBTQlVNc+fz1vqXeOPPPQz+dyjJ5uApgDFFeRCDeMByUO7PmilZv67oyCnMXMnQmRetptA/kJDz0Hozzv+bH443zSzqPtleTM7nO57gtubhdJr+h/+B1uIPU2KLiLMqimDaA6s50pGRhjGp3/f+Fp8B9q6vEuLVWkD9jffAYoiB9q9m3lY7fsxqKGB1Oe21Bv3jdfREsvsSSm7Dzl/XZA1asT0Si3keNWhlRdI2QQRsenoBIKqe7Zc+wOH4pZsC3xT0iWLbVRJBy1bpPQUDAr4JImARuyV/ZZYZh2358LcM2Ycv68S4a2sZ4AyDSZ0Po2GH1LszcfbXskMw9qZ7Z54WVlC3KOkPXLgGv57HpgIe0I5UzmCmEsVBUjy/t83FRpjJYmsCv+VkG4UtDh6nwxuABR74hm7/at+ckSMPru+8MinKLSksNkBoRPm0pmYptq6EhLfViKEertQ2NJBanAZOQDo2Lwyow9kjs+Xw1Emmf984dlUTFPrizNPTjBHvD7oeEmjnuCgc6MIzh1wWCCq5uEvr3tUh2bW3IZTxAkDccsw=
+  file:
+    - bin/kube-cfn-signal_linux_amd64
+    - bin/kube-cfn-signal_linux_386
+    - bin/kube-cfn-signal_linux_arm
+    - bin/kube-cfn-signal_darwin_amd64
+    - bin/kube-cfn-signal_windows_amd64.exe
+  on:
+    tags: true
+    repo: UKHomeOffice/kube-cfn-signal

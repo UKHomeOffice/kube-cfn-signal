@@ -56,3 +56,34 @@ TimeoutStartSec=10m
 ExecStart=/opt/bin/kube-cfn-signal --insecure-skip-tls-verify
 ```
 
+## Build
+
+Dependencies are located in the vendor directory and managed using
+[govendor](https://github.com/kardianos/govendor) cli tool.
+
+```
+go test -v -cover
+
+mkdir -p bin
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X main.Version=dev+git" -o bin/kube-cfn-signal
+```
+
+
+## Release process
+
+Push / Merge to master will produce a docker
+[image](https://quay.io/repository/ukhomeofficedigital/kube-cfn-signal?tab=tags) with a tag `latest`.
+
+To create a new release, just create a new tag off master.
+
+
+## Contributing
+
+We welcome pull requests. Please raise an issue to discuss your changes before
+submitting a patch.
+
+
+## Author
+
+Vaidas Jablonskis [(vaijab)](https://github.com/vaijab)
+

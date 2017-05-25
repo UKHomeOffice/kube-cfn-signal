@@ -1,0 +1,65 @@
+workspace:
+  base: /go
+  path: src/github.com/UKHomeOffice/kube-cfn-signal
+
+pipeline:
+  build_binary:
+    image: golang:1.8.1
+    commands:
+      - go test -v -cover
+      - mkdir -p bin
+      - GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_linux_amd64
+      - GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_linux_386
+      - GOOS=linux GOARCH=arm CGO_ENABLED=0 go build -o bin/kube-cfn-signal_linux_arm
+      - GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_darwin_amd64
+      - GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_windows_amd64.exe
+
+  build_docker_image:
+    image: docker:1.12
+    environment:
+      - DOCKER_HOST=tcp://127.0.0.1:2375
+    commands:
+      - docker build -t image .
+
+  latest_image_to_quay:
+    image: docker:1.13
+    environment:
+      - DOCKER_HOST=tcp://127.0.0.1:2375
+    commands:
+      - docker login -u="ukhomeofficedigital+kube_cfn_signal" -p=${DOCKER_PASSWORD} quay.io
+      - docker tag image quay.io/ukhomeofficedigital/kube-cfn-signal:latest
+      - docker push quay.io/ukhomeofficedigital/kube-cfn-signal:latest
+    when:
+      event: push
+      branch: master
+
+  tag_image_to_quay:
+    image: docker:1.13
+    environment:
+      - DOCKER_HOST=tcp://127.0.0.1:2375
+    commands:
+      - docker login -u="ukhomeofficedigital+kube_cfn_signal" -p=${DOCKER_PASSWORD} quay.io
+      - docker tag image quay.io/ukhomeofficedigital/kube-cfn-signal:${DRONE_TAG}
+      - docker push quay.io/ukhomeofficedigital/kube-cfn-signal:${DRONE_TAG}
+    when:
+      event: tag
+
+  publish:
+    github_release:
+      api_key: FFcsLKh2G/UDlZlcREUmfy94ghWS5Qpja+wq2SDFhRd2CKO4pC13BvRj2n0FmC3CVhWVUC6tfNH43FHmDMP1KzKFGSjdmihbuQgIcAB0cmpDaEmLoeJj1vJxe/OPnQBTQlVNc+fz1vqXeOPPPQz+dyjJ5uApgDFFeRCDeMByUO7PmilZv67oyCnMXMnQmRetptA/kJDz0Hozzv+bH443zSzqPtleTM7nO57gtubhdJr+h/+B1uIPU2KLiLMqimDaA6s50pGRhjGp3/f+Fp8B9q6vEuLVWkD9jffAYoiB9q9m3lY7fsxqKGB1Oe21Bv3jdfREsvsSSm7Dzl/XZA1asT0Si3keNWhlRdI2QQRsenoBIKqe7Zc+wOH4pZsC3xT0iWLbVRJBy1bpPQUDAr4JImARuyV/ZZYZh2358LcM2Ycv68S4a2sZ4AyDSZ0Po2GH1LszcfbXskMw9qZ7Z54WVlC3KOkPXLgGv57HpgIe0I5UzmCmEsVBUjy/t83FRpjJYmsCv+VkG4UtDh6nwxuABR74hm7/at+ckSMPru+8MinKLSksNkBoRPm0pmYptq6EhLfViKEertQ2NJBanAZOQDo2Lwyow9kjs+Xw1Emmf984dlUTFPrizNPTjBHvD7oeEmjnuCgc6MIzh1wWCCq5uEvr3tUh2bW3IZTxAkDccsw=
+      files:
+        - bin/kube-cfn-signal_linux_amd64
+        - bin/kube-cfn-signal_linux_386
+        - bin/kube-cfn-signal_linux_arm
+        - bin/kube-cfn-signal_darwin_amd64
+        - bin/kube-cfn-signal_windows_amd64.exe
+    when:
+      event: tag
+
+services:
+  dind:
+    image: docker:1.13-dind
+    privileged: true
+    command:
+      - "-s"
+      - "overlay"

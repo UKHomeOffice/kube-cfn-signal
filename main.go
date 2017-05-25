@@ -129,7 +129,7 @@ func checkURL(url string, ch chan int) {
 			time.Sleep(3 * time.Second)
 			continue
 		}
-		if resp.StatusCode == http.StatusOK {
+		if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusUnauthorized {
 			log.Printf("Endpoint is healthy: %q.\n", url)
 			ch <- 1
 			return

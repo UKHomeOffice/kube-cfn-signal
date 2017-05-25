@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "NeKH+twA+3z7EzaKQQdN5FIhJP4=",
+			"checksumSHA1": "Ue3s+OApw1HYR8LVT13bJ0P0QH4=",
 			"path": "github.com/aws/aws-sdk-go/aws",
-			"revision": "8a2306a0e7d8d4095e5f1beee530ceaee6e7d609",
-			"revisionTime": "2016-10-25T21:42:20Z"
+			"revision": "0bc99f4aa1cf50245de234b1ce0b33463a3ad5fe",
+			"revisionTime": "2017-05-24T18:04:24Z"
 		},
 		{
 			"checksumSHA1": "Y9W+4GimK4Fuxq+vyIskVYFRnX4=",

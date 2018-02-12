@@ -15,32 +15,38 @@ pipeline:
       - GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -o bin/kube-cfn-signal_windows_amd64.exe
 
   build_docker_image:
-    image: docker:1.12
+    image: docker:17.12.0
     environment:
-      - DOCKER_HOST=tcp://127.0.0.1:2375
+      - DOCKER_HOST=tcp://172.17.0.1:2375
     commands:
-      - docker build -t image .
+      - docker build -t kube-cfn-signal:$${DRONE_COMMIT_SHA} .
 
   latest_image_to_quay:
-    image: docker:1.13
+    image: docker:17.12.0
+    secrets:
+      - docker_password
     environment:
-      - DOCKER_HOST=tcp://127.0.0.1:2375
+      - DOCKER_HOST=tcp://172.17.0.1:2375
     commands:
-      - docker login -u="ukhomeofficedigital+kube_cfn_signal" -p=${DOCKER_PASSWORD} quay.io
-      - docker tag image quay.io/ukhomeofficedigital/kube-cfn-signal:latest
+      - docker login -u="ukhomeofficedigital+kube_cfn_signal" -p=$${DOCKER_PASSWORD} quay.io
+      - docker tag kube-cfn-signal:$${DRONE_COMMIT_SHA} quay.io/ukhomeofficedigital/kube-cfn-signal:$${DRONE_COMMIT_SHA}
+      - docker tag kube-cfn-signal:$${DRONE_COMMIT_SHA} quay.io/ukhomeofficedigital/kube-cfn-signal:latest
+      - docker push quay.io/ukhomeofficedigital/kube-cfn-signal:$${DRONE_COMMIT_SHA}
       - docker push quay.io/ukhomeofficedigital/kube-cfn-signal:latest
     when:
       event: push
       branch: master
 
   tag_image_to_quay:
-    image: docker:1.13
+    image: docker:17.12.0
+    secrets:
+      - docker_password
     environment:
-      - DOCKER_HOST=tcp://127.0.0.1:2375
+      - DOCKER_HOST=tcp://172.17.0.1:2375
     commands:
-      - docker login -u="ukhomeofficedigital+kube_cfn_signal" -p=${DOCKER_PASSWORD} quay.io
-      - docker tag image quay.io/ukhomeofficedigital/kube-cfn-signal:${DRONE_TAG}
-      - docker push quay.io/ukhomeofficedigital/kube-cfn-signal:${DRONE_TAG}
+      - docker login -u="ukhomeofficedigital+kube_cfn_signal" -p=$${DOCKER_PASSWORD} quay.io
+      - docker tag kube-cfn-signal:$${DRONE_COMMIT_SHA} quay.io/ukhomeofficedigital/kube-cfn-signal:$${DRONE_TAG}
+      - docker push quay.io/ukhomeofficedigital/kube-cfn-signal:$${DRONE_TAG}
     when:
       event: tag
 
@@ -54,11 +60,3 @@ pipeline:
       - bin/kube-cfn-signal_windows_amd64.exe
     when:
       event: tag
-
-services:
-  dind:
-    image: docker:1.13-dind
-    privileged: true
-    command:
-      - "-s"
-      - "overlay"

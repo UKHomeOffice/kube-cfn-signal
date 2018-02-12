@@ -52,6 +52,8 @@ pipeline:
 
   github_release:
     image: plugins/github-release
+    secrets:
+      - github_release_api_key
     files:
       - bin/kube-cfn-signal_linux_amd64
       - bin/kube-cfn-signal_linux_386
